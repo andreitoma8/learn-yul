@@ -1,4 +1,4 @@
-# Learning Yul
+# Learn Yul
 
 ## This repository is a collection of my notes taken in the process of learning Yul.
 
@@ -74,7 +74,7 @@ Both of the following examples are valid:
 
 ```solidity
     function forLoop(uint256 n) public {
-        assambly {
+        assembly {
             for {let i := 0} lt(i, n) {i := add(i, 1)} {
                 // do something
             }
@@ -82,7 +82,7 @@ Both of the following examples are valid:
     }
 
     function forLoop(uint256 n) public {
-        assambly {
+        assembly {
             let i := 0
             for { } lt(i, n) {} {
                 // do something
@@ -98,7 +98,7 @@ Yul has no boolean type. Instead, any value other than `0` is considered true.
 
 ```solidity
     function ifTrue(uint256 n) public {
-        assambly {
+        assembly {
             if 2 { // 2 is true
                 // if true, do something
             }
@@ -106,7 +106,7 @@ Yul has no boolean type. Instead, any value other than `0` is considered true.
     }
 
     function ifFalse(uint256 n) public {
-        assambly {
+        assembly {
             if 0 {
                 // if false, do something
             }
@@ -114,7 +114,7 @@ Yul has no boolean type. Instead, any value other than `0` is considered true.
     }
 
     function negation(uint256 n) public {
-        assambly {
+        assembly {
             // if 0 is 0 result in true
             if iszero(0) {
                 // if true, do something
@@ -137,13 +137,13 @@ Example of setter and getter functions for a storage variable:
     uint256 x;
 
     function set(uint256 _x) public {
-        assambly {
+        assembly {
             sstore(x.slot, _x)
         }
     }
 
     function get() public view returns (uint256 x_) {
-        assambly {
+        assembly {
             x_ := sload(x.slot)
         }
     }
@@ -181,7 +181,7 @@ Example of setter and getter function for packed storage variables:
     }
 
     function get() public view returns (uint16 c_) {
-        assambly {
+        assembly {
             // Get the storage slot of the variable
             let wholeSlot := sload(a.slot)
 
@@ -204,7 +204,7 @@ Example of setter and getter function for packed storage variables:
     uint256[5] arr;
 
     function get(uint256 index) public view returns (uint256 value) {
-        assambly {
+        assembly {
             value := sload(add(arr.slot, index))
         }
     }

@@ -68,7 +68,7 @@ For multiple operations, the innermost operation is executed first:
 let x := add(1, mul(2, 3)) // = add(1, 6) = 7
 ```
 
-# For Loop
+## For Loop
 
 Both of the following examples are valid:
 
@@ -92,7 +92,7 @@ Both of the following examples are valid:
     }
 ```
 
-# If Statement
+## If Statement
 
 Yul has no boolean type. Instead, any value other than `0` is considered true.
 
@@ -246,9 +246,9 @@ Example of setter and getter function for packed storage variables:
     }
 ```
 
-# Mappings
+## Mappings
 
-## Simple Mapping
+### Simple Mapping
 
 Mappings behave similar to arrays, but it concatenates the key and the mapping's storage slot to get the location of the value.
 
@@ -268,7 +268,7 @@ Mappings behave similar to arrays, but it concatenates the key and the mapping's
     }
 ```
 
-## Nested Mappings
+### Nested Mappings
 
 Nested mappings are similar, but use hashes of hashes to get the location of the value. The concatenation and the hashing is done from right to left.
 
@@ -288,7 +288,7 @@ Nested mappings are similar, but use hashes of hashes to get the location of the
     }
 ```
 
-## Mapping of Arrays
+### Mapping of Arrays
 
 ```solidity
     mapping(address => uint256[]) map;
@@ -379,6 +379,8 @@ Using `mstore8` 7 into memory slot 0:
         let freeMemoryPointer := mload(0x40)
     }
 ```
+
+#### Never write to the free memory pointer(0x40), or you will mess up Solidity's memory management.
 
 ### Memory Struct
 
@@ -473,6 +475,81 @@ Compared to abi.encode, abi.encodePacked will not add padding to the arguments.
     }
 ```
 
+## return
+
+The `return(a,b)` will take the data from memory, from slot a to slot b. This allows you to return data that is bigger than 32 bytes.
+
+```solidity
+    function f() external returns (uint256, uint256) {
+        assembly {
+            // store 1 and 2 in memory slots 0x80 and 0xa0
+            mstore(0x80, 1)
+            mstore(0xa0, 2)
+            // return the data from slot 0x80 to slot 0xc0
+            return(0x80, 0xc0)
+        }
+    }
+```
+
+If the return data is smaller than 32 bytes, it will not be padded to 32 bytes, so when the actual returned value is smaller than the value the client expects from the function statement, the client will not be able to decode the data. But if the return data is bigger than expected, it will just read the first x bytes it expects and will be able to decode the data.
+
+## revert
+
+The args of `revert(a,b)` are the same as `return(a,b)`, in the sense that it will also return the data from memory, from slot a to slot b. The difference is that `revert` will stop the execution.
+
+```solidity
+    assembly {
+        if iszero(ez(caller(), 0xB0B)) {
+            // This is the code used most of the time, just to stop the execution
+            revert(0, 0)
+        }
+    }
+```
+
+## keccak256
+
+In yul, the `keccak256(s,l)` will take the data to be hashed from memory, from slot s to slot s + l.
+
+```solidity
+    function f() external {
+        assembly {
+            // store 1 and 2 in memory slots 0x80 and 0xa0
+            mstore(0x80, 1)
+            mstore(0xa0, 2)
+
+            // hash the data from slot 0x80 to slot 0xc0(0x80 + 0x40) and store it in slot 0xc0
+            mstore(0xc0, keccak256(0x80, 0x40))
+        }
+    }
+```
+
+## Events
+
+The Yul keywords for emitting events are:
+
+-   `log0(p, s)` - emits an event with no topics and data of size `s` starting at memory slot `p`
+-   `log1(p, s, t1)` - emits an event with one topic `t1` and data of size `s` starting at memory slot `p`
+-   `log2(p, s, t1, t2)` - emits an event with two topics `t1`, `t2` and data of size `s` starting at memory slot `p`
+-   `log3(p, s, t1, t2, t3)` - emits an event with three topics `t1`, `t2`, `t3` and data of size `s` starting at memory slot `p`
+-   `log4(p, s, t1, t2, t3, t4)` - emits an event with four topics `t1`, `t2`, `t3`, `t4` and data of size `s` starting at memory slot `p`
+
+The `t1` is the keccak256 hash of the event signature, and the `t2` is the first indexed argument of the event. The `t3` is the second indexed argument of the event, and so on.
+
+```solidity
+    event SomeLog(uint256 indexed a, uint256 indexed b, bool c);
+
+    function f() external {
+        assembly {
+            // keccak256("SomeLog(uint256,uint256)")
+            let signature := 0xc200138117cf199dd335a2c6079a6e1be01e6592b6a76d4b5fc31b169df819cc
+            // store 1 in memory slot 0x80
+            mstore(0x80, 1)
+            // emit the event SomeLog(2, 3, true)
+            log3(0x80, 0x20, signature, 2, 3)
+        }
+    }
+```
+
 ### Only reading from memory makes msize consider the memory slot as used.
 
 ```solidity
@@ -492,13 +569,7 @@ Compared to abi.encode, abi.encodePacked will not add padding to the arguments.
     }
 ```
 
-### abi.encode and abi.encodePacked
-
--   When using abi.encode, the compiler will add padding to the data to make it fit into 32 byte slots.
-
--   When using abi.encodePacked, the compiler will not add padding to the data.
-
 # General Notes
 
--   In in-lane assambely, you can only assign values to variables on the stack. You cannot assign values to variables in storage or memory.
+-   In in-lane assambely, you can only initialize variables on the stack. You cannot initialize variables in storage or memory.
 -   Yul has no overflow protection!

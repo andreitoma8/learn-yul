@@ -84,7 +84,7 @@ Both of the following examples are valid:
     function forLoop(uint256 n) public {
         assembly {
             let i := 0
-            for { } lt(i, n) {} {
+            for { } lt(i, n) { } {
                 // do something
                 i := add(i, 1)
             }
@@ -100,22 +100,22 @@ Yul has no boolean type. Instead, any value other than `0` is considered true.
     function ifTrue(uint256 n) public {
         assembly {
             if 2 { // 2 is true
-                // if true, do something
+                // do something
             }
         }
     }
 
     function ifFalse(uint256 n) public {
         assembly {
-            if 0 {
-                // if false, do something
+            if 0 { // 0 is false
+                // do something
             }
         }
     }
 
     function negation(uint256 n) public {
         assembly {
-            // if 0 is 0 result in true
+            // if 0 is 0 result in true, negation of false
             if iszero(0) {
                 // if true, do something
             }
@@ -156,20 +156,20 @@ Example of setter and getter functions for a storage variable:
 Example of setter and getter function for packed storage variables:
 
 ```solidity
-    uint128 a = 4;
-    uint96 b = 6;
-    uint16 c = 8;
-    uint8 d = 1;
+    uint128 a;
+    uint96 b;
+    uint16 c;
+    uint8 d;
 
     function set(uint16 _c) public {
         assembly{
             // Get the storage slot of the variable
             let wholeSlot := sload(c.slot)
 
-            // Clear the variable's bits in the slot
+            // Clear the variable's bits in the slot. Since it is a uint16, it is 2 bytes long.
             let cleared := and(wholeSlot, 0xffff0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
 
-            // Shift the new value to the right by the offset of the variable
+            // Shift the new value to the left by the offset of the variable multiplied by 8(1 byte = 8 bits)
             let shifted := shl(mul(c.offset, 8), _c)
 
             // Combine the cleared slot and the shifted value
@@ -183,10 +183,10 @@ Example of setter and getter function for packed storage variables:
     function get() public view returns (uint16 c_) {
         assembly {
             // Get the storage slot of the variable
-            let wholeSlot := sload(a.slot)
+            let wholeSlot := sload(c.slot)
 
             // Shift the slot to the right by the offset of the variable
-            let shifted := shr(mul(a.offset, 8), wholeSlot)
+            let shifted := shr(mul(c.offset, 8), wholeSlot)
 
             // Mask the slot to get the value of the variable
             c_ := and(shifted, 0xffff)
@@ -206,6 +206,22 @@ Example of setter and getter function for packed storage variables:
     function get(uint256 index) public view returns (uint256 value) {
         assembly {
             value := sload(add(arr.slot, index))
+        }
+    }
+```
+
+-   For arrays of variables smaller than 32 bytes, the compiler will pack the variables into a single slot when possible.
+
+```solidity
+    uint128[4] arr;
+
+    function getIndex1() public view returns (uint128 value) {
+        bytes32 packed;
+        assembly {
+            // Get the first bytes32 of the array
+            packed := sload(arr.slot)
+            // Shift the bytes32 to the right by 16 bytes(128 bits) to get the value of the first variable
+            value := shr(mul(16, 8), packed)
         }
     }
 ```
@@ -289,8 +305,6 @@ Nested mappings are similar, but use hashes of hashes to get the location of the
         }
     }
 ```
-
-For arrays of mappings of variables smaller than 32 bytes, the compiler will pack the variables into a single slot.
 
 # General Notes
 

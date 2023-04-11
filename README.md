@@ -306,6 +306,198 @@ Nested mappings are similar, but use hashes of hashes to get the location of the
     }
 ```
 
+# Memory
+
+### Memory is used for temporary storage of variables. It is cleared at the end of the function call.
+
+### Memory is used in the following cases:
+
+-   Return values to external calls
+-   Set the function arguments for external calls
+-   Get values from external calls
+-   Revert with an error string
+-   Log messages
+-   Create other contracts
+-   Use the keccak256 function
+
+### Memory is laid out in 32 byte sequences.
+
+## Memory keywords:
+
+-   `mload(p)`: Retrieves 32 bytes from memory from slot p [p .. 0x20]
+-   `mstore(p,v)`: Stores 32 bytes from v into memory slot p [p .. 0x20]
+-   `mstore8(p,v)`: Like mstore, but only stores 1 byte
+-   `msize`: Returns the largest accessed memory index in the current transaction
+
+Using `mstore` 7 into memory slot 0:
+
+```solidity
+    assembly {
+        // empty memory looks like this:
+        //  00   00   00   00  ...  00   00   00   00
+        // 0x00 0x01 0x02 0x03 ... 0x17 0x18 0x19 0x20
+
+        mstore(0, 7)
+        // is the same as doing:
+        // mstore(0, 0x0000...000007) // 32 bytes
+
+        // the memory now looks like this:
+        //  00   00   00   00  ...  00   00   07   00
+        // 0x00 0x01 0x02 0x03 ... 0x17 0x18 0x19 0x20
+    }
+```
+
+Using `mstore8` 7 into memory slot 0:
+
+```solidity
+    assembly {
+        // empty memory looks like this:
+        //  00   00   00   00  ...  00   00   00   00
+        // 0x00 0x01 0x02 0x03 ... 0x17 0x18 0x19 0x20
+
+        mstore8(0, 7)
+        // is the same as doing:
+        // mstore8(0, 0x07) // 1 byte
+
+        // the memory now looks like this:
+        //  07   00   00   00  ...  00   00   00   00
+        // 0x00 0x01 0x02 0x03 ... 0x17 0x18 0x19 0x20
+    }
+```
+
+## How Solidity uses memory:
+
+-   Solidity allocates slots [0x00-0x20], [0x20-0x40] for "scratch space" (first 32x2 bytes)
+-   Solidity reserves slot [0x40-0x60] as the "free memory pointer" (the location of the next free memory slot)
+-   Solidity keeps slot [0x60-0x80] empty (next 32 bytes)
+-   The action begins at slot [0x80-...]
+
+### To get the next free memory slot in Solidity, so you can use it knowing that it is empty, use the following code:
+
+```solidity
+    assembly {
+        let freeMemoryPointer := mload(0x40)
+    }
+```
+
+### Memory Struct
+
+Adding structs to memory is just like adding their values 1 by 1.
+
+```solidity
+    struct S {
+        uint256 a;
+        uint256 b;
+    }
+
+    function f() external {
+        bytes32 freeMemoryPointer;
+
+        S memory s = S(a: 1, b: 2);
+
+        assembly {
+            // free memory pointer is now 0x80 + 32 bytes * 2 = 0xc0
+            freeMemoryPointer := mload(0x40)
+
+        // mload(0x80) would return a (1)
+        // mload(0xa0) would return b (2)
+        }
+    }
+```
+
+### Memory Fixed Arrays
+
+Fixed arays work just like structs
+
+```solidity
+    function f() external {
+        uint256[2] memory arr = [1, 2];
+
+        assembly {
+            // mload(0x80) would return 0x0000...000001 (32 bytes)
+            // mload(0xa0) would return 0x0000...000002 (32 bytes)
+        }
+    }
+```
+
+### Memory Dynamic Arrays
+
+For dynamic arrays, the first memory slot of 32 bytes is used to store the lenght of the array. In Yul, the array value is the location of the array in memory.
+
+```solidity
+    function f(uint256[] memory arr) external {
+        bytes32 location;
+        bytes32 length;
+
+        assembley {
+            // the location will be the first free memory pointer: 0x80
+            location := arr
+            // the length will be the first memory slot of the array: 0x80
+            length := arr.length
+
+            mload(add(location, 0x20)) // returns the first element of the array
+            mload(add(location, 0x40)) // returns the second element of the array
+        }
+    }
+```
+
+### abi.encode
+
+The operation abi.encode will first push the bytes length of the arguments onto memory and then the arguments. If any argument is smaller than 32 bytes, it will be padded to 32 bytes.
+
+```solidity
+    function f() external {
+        abi.encode(uint256(1), uint256(2));
+
+        assembly {
+            // mload(0x80) would return 0x0000...000040 (the bytes length of the arguments: 64)
+            // mload(0xa0) would return 0x0000...000001 (32 bytes)
+            // mload(0xc0) would return 0x0000...000002 (32 bytes)
+        }
+    }
+```
+
+### abi.encodePacked
+
+Compared to abi.encode, abi.encodePacked will not add padding to the arguments.
+
+```solidity
+    function f() external {
+        abi.encodePacked(uint256(1), uint128(2));
+
+        assembly {
+            // mload(0x80) would return 0x0000...000030 (the bytes length of the arguments: 48)
+            // mload(0xa0) would return 0x0000...000001 (32 bytes)
+            // mload(0xc0) would return 0x00...0002 (16 bytes)
+        }
+    }
+```
+
+### Only reading from memory makes msize consider the memory slot as used.
+
+```solidity
+    bytes32 slot;
+    bytes32 _msize;
+
+    assembly {
+        ssembly {
+            // read a bite from memory slot 0xff
+            pop(mload(0xff))
+            // the free memory pointer is still 0x80
+            slot := mload(0x40)
+            // but msize considers the memory slot 0xff as used
+            // so _msize is 0x120
+            _msize := msize()
+        }
+    }
+```
+
+### abi.encode and abi.encodePacked
+
+-   When using abi.encode, the compiler will add padding to the data to make it fit into 32 byte slots.
+
+-   When using abi.encodePacked, the compiler will not add padding to the data.
+
 # General Notes
 
 -   In in-lane assambely, you can only assign values to variables on the stack. You cannot assign values to variables in storage or memory.

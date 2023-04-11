@@ -399,8 +399,8 @@ Adding structs to memory is just like adding their values 1 by 1.
             // free memory pointer is now 0x80 + 32 bytes * 2 = 0xc0
             freeMemoryPointer := mload(0x40)
 
-        // mload(0x80) would return a (1)
-        // mload(0xa0) would return b (2)
+        mload(0x80) // returns a (1)
+        mload(0xa0) // returns b (2)
         }
     }
 ```
@@ -414,8 +414,8 @@ Fixed arays work just like structs
         uint256[2] memory arr = [1, 2];
 
         assembly {
-            // mload(0x80) would return 0x0000...000001 (32 bytes)
-            // mload(0xa0) would return 0x0000...000002 (32 bytes)
+            mload(0x80) // returns 0x0000...000001 (32 bytes)
+            mload(0xa0) // returns 0x0000...000002 (32 bytes)
         }
     }
 ```
@@ -450,9 +450,9 @@ The operation abi.encode will first push the bytes length of the arguments onto 
         abi.encode(uint256(1), uint256(2));
 
         assembly {
-            // mload(0x80) would return 0x0000...000040 (the bytes length of the arguments: 64)
-            // mload(0xa0) would return 0x0000...000001 (32 bytes)
-            // mload(0xc0) would return 0x0000...000002 (32 bytes)
+            mload(0x80) // returns 0x0000...000040 (the bytes length of the arguments: 64)
+            mload(0xa0) // returns 0x0000...000001 (32 bytes)
+            mload(0xc0) // returns 0x0000...000002 (32 bytes)
         }
     }
 ```
@@ -466,9 +466,9 @@ Compared to abi.encode, abi.encodePacked will not add padding to the arguments.
         abi.encodePacked(uint256(1), uint128(2));
 
         assembly {
-            // mload(0x80) would return 0x0000...000030 (the bytes length of the arguments: 48)
-            // mload(0xa0) would return 0x0000...000001 (32 bytes)
-            // mload(0xc0) would return 0x00...0002 (16 bytes)
+            mload(0x80) // returns 0x0000...000030 (the bytes length of the arguments: 48)
+            mload(0xa0) // returns 0x0000...000001 (32 bytes)
+            mload(0xc0) // returns 0x00...0002 (16 bytes)
         }
     }
 ```

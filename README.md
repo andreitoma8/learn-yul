@@ -814,14 +814,14 @@ contract A {
 -   To receive calls from Solidity contracts, the `fallback` function is used, which is called when no other function matches the given function signature.
 
 ```solidity
-    // the interface the Solidity contract will use to call the Yul contract
-    interface IYulContract {
-        function get23() external returns (uint256);
-        function increment(uint256 _value) external returns (uint256);
-    }
+// the interface the Solidity contract will use to call the Yul contract
+interface IYulContract {
+    function get23() external returns (uint256);
+    function increment(uint256 _value) external returns (uint256);
+}
 
-    contract YulContract{
-        fallback(bytes calldata data) external returns (bytes memory returnData) {
+contract YulContract{
+    fallback(bytes calldata data) external returns (bytes memory returnData) {
         assembly{
             let callData := calldataload(0)
             // 0x259c137d00000000000000000000000000000000000000000000000000000000 or
@@ -864,5 +864,5 @@ contract A {
             }
         }
     }
-    }
+}
 ```

@@ -947,3 +947,81 @@ object "FullyYul" {
     }
 }
 ```
+
+## Require
+
+```yul
+function require(condition) {
+    // if condition is false, revert
+    if iszero(condition) { revert(0, 0) }
+}
+```
+
+## Check if a 32 bytes value is a valid Ethereum address
+
+```yul
+function isAddress(value) -> result {
+    // 0xffffffffffffffffffffffffffffffffffffffff is used as a 32 bytes value by not, so it
+    // will be padded to 0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff
+
+    // the result of not will be
+    // 0xffffffffffffffffffffffff0000000000000000000000000000000000000000
+
+    // and a ethereum address is 20 bytes, so padded in 32 bytes looks like this:
+    // 0x000000000000000000000000A4Ad17ef801Fa4bD44b758E5Ae8B2169f59B666F
+
+    // so the result of AND will be 0 if the value is the length of an ethereum address
+    if iszero(and(v, not(0xffffffffffffffffffffffffffffffffffffffff))) {
+        result := 1
+        leave
+    }
+}
+```
+
+## Checking for overflow in Yul
+
+-   Addition: check if the sum of two values is less than either of the values.
+
+```yul
+function safeAdd(a, b) -> result {
+    r := add(a, b)
+    // OR is a smart way of the values is true, because if one of the values is 1, the result will be 1
+    if or(lt(r, a), lt(r, b)) {
+        revert(0,0)
+    }
+}
+```
+
+-   Subtraction: check if the minuend is lower than the subtrahend.
+
+```yul
+function safeSub(a, b) -> result {
+    if lt(a, b) {
+        revert(0,0)
+    }
+    result := sub(a, b)
+}
+```
+
+-   Multiplication: if the product divided by the first value is not equal to the second value, then there is an overflow.
+
+```yul
+function safeMul(a, b) -> result {
+    result := mul(a, b)
+
+    if iszero(eq(div(result, a), b)) {
+        revert(0,0)
+    }
+}
+```
+
+-   Division: check if the divisor is bigger than the dividend.
+
+```yul
+function safeDiv(a, b) -> result {
+    if lt(b, a) {
+        revert(0,0)
+    }
+    result := div(a, b)
+}
+```

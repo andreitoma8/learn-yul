@@ -1,6 +1,6 @@
 # Learn Yul
 
-## This repository is a collection of my notes taken in the process of learning Yul.
+## This repository is a collection of my notes taken in the process of learning Yul, currently going through Jeffrey Scholz's [Yul course](https://www.udemy.com/course/advanced-solidity-yul-and-assembly/).
 
 Still a work in progress.
 
@@ -28,7 +28,7 @@ contract C {
 let x := 1
 ```
 
--
+In in-lane assambely, you can only initialize variables on the stack. You cannot initialize variables in storage or memory.
 
 # Yul Types
 
@@ -380,7 +380,7 @@ Using `mstore8` 7 into memory slot 0:
     }
 ```
 
-#### Never write to the free memory pointer(0x40), or you will mess up Solidity's memory management.
+#### While the free memory pointer is automatically updated by Solidity, it is not updated by assembly code, so you have to do it yourself if solidity code follows the in-line assembly code.
 
 ### Memory Struct
 
@@ -495,7 +495,7 @@ If the return data is smaller than 32 bytes, it will not be padded to 32 bytes, 
 
 ## revert
 
-The args of `revert(a,b)` are the same as `return(a,b)`, in the sense that it will also return the data from memory, from slot a to slot b. The difference is that `revert` will stop the execution.
+The args of `revert(a,b)` are the same as `return(a,b)`, in the sense that it will also return the data from memory, from slot a to slot b. The difference is that `revert` will stop the execution of the function(it will not revert the whole transaction and the blockchain state as Solidity does).
 
 ```solidity
     assembly {
@@ -569,7 +569,300 @@ The `t1` is the keccak256 hash of the event signature, and the `t2` is the first
     }
 ```
 
-# General Notes
+# Calls
 
--   In in-lane assambely, you can only initialize variables on the stack. You cannot initialize variables in storage or memory.
--   Yul has no overflow protection!
+## Components of a EVM transaction:
+
+-   `from`: `tx.origin` / `origin()` - the sender of the transaction
+-   `amount`: `msg.value` - the amount of ether sent with the transaction
+-   `gasPrice`: `gasprice()` - the gas price of the transaction
+-   `data`: `msg.data` - the data sent with the transaction
+
+-   Solidity reserves the first 4 bytes of `msg.data` to specify the function selector of the function to be called(the first 4 bytes of the keccak256 of the function selector):
+-   The rest of the `msg.data` is the abi.encoded arguments of the function call.
+-   Solidity expects the arguments to be 32 bytes, but this is just a convention.
+
+-   balanceOf(address) -> keccak256("balanceOf(address)")[0:4] -> `0x70a08231`
+-   `msg.data[0:4]` - the function selector
+-   `msg.data[4:]` - the abi.encoded arguments of the function call
+
+-   Yul does not have the concept of `function selectors`, `abi.encodeWithSignature` or `interfaces`, so you have to manually encode the arguments and the function selector.
+
+## Calling other Solidity contracts in Yul:
+
+-   `call(g, a, v, in, insize, out, outsize)` - calls contract at address `a` with `g` gas and `v` wei, input area from `in` to `in + insize` and output area from `out` to `out + outsize` returning 0 on error (eg. out of gas) and 1 on success.
+
+-   `staticcall(g, a, in, insize, out, outsize)` - calls contract at address while guaranteeing no state changes. The input is memory from `in` to `in + insize` providing `g` gas and output area memory from `out` to `out + outsize` returning 0 on error (eg. out of gas) and 1 on success.
+
+Function with no params example:
+
+```solidity
+contract A {
+    // the function selector of 23() is 0x5c60da1b (keccak256("23()")[0:4])
+    function 23() external returns (uint256) {
+        return 23;
+    }
+}
+
+contract B {
+    function call23(address _a) external view returns (uint256) {
+        assembly {
+            mstore(0x00, 0x00afa6ed)
+            // // 0000000000000000000000000000000000000000000000000000000000afa6ed
+            // last 4 bytes of the memory slot 0x00 are the function selector of 23()
+
+            // call the function 23 of contract A
+            // and store the result in memory slot 0x00
+            if iszero(staticcall(gas(), _a, 28, 32, 0x00, 0x20)) {
+                revert(0, 0)
+            }
+            // return the result from memory slot 0x00
+            return(0x00, 0x20)
+        }
+    }
+}
+```
+
+Function with params example:
+
+```solidity
+contract A {
+    function sum(uint256 _a, uint256 _b) external pure returns (uint256) {
+        return _a + _b;
+    }
+}
+
+contract B {
+    function callSum(address _a) external view returns (uint256) {
+        assembly {
+            // load the free memory pointer
+            let freeMemPointer := mload(0x40)
+            // store the function selector of sum(uint256, uint256) in memory
+            mstore(freeMemPointer, 0xcad0899b)
+            // store the first argument of sum(uint256, uint256) in the next memory slot
+            mstore(add(freeMemPointer, 0x20), 3)
+            // store the second argument of sum(uint256, uint256) in the next memory slot
+            mstore(add(freeMemPointer, 0x40), 12)
+            // update the free memory pointer
+            mstore(0x40, add(freeMemPointer, 0x60))
+            // memory will look like:
+            //  00000000000000000000000000000000000000000000000000000000cad0899b
+            //  0000000000000000000000000000000000000000000000000000000000000003
+            //  000000000000000000000000000000000000000000000000000000000000000c
+
+            // call the sum function of contract A
+            // and store the result in memory slot 0x00
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x20)) {
+                revert(0,0)
+            }
+            // return the result from memory slot 0x00
+            return(0x00, 0x20)
+        }
+    }
+}
+```
+
+-   `returndatasize()` - returns the size of the return data of the last call.
+-   `returndatacopy(t, f, s)` - copies `s` bytes from the return data from stack to memory, starting from position `f` and writes it to memory at position `t`.
+
+```solidity
+contract A {
+    // Function that returns bytes of length len
+    function getBytes(uint256 len) external pure returns (bytes memory result) {
+        result = new bytes(len);
+        for (uint256 i; i < len; i ++) {
+            result[i] = 0xab;
+        }
+    }
+}
+
+contract B {
+    function callSum(address _a) external view returns (bytes memory) {
+        assembly {
+            // load the free memory pointer
+            let freeMemPointer := mload(0x40)
+            // store the function selector of getBytes(uint256) in memory
+            mstore(freeMemPointer, 0x57bc2ef3)
+            // store the argument 10 for getBytes(uint256) in the next memory slot
+            mstore(add(freeMemPointer, 0x20), 100)
+            // update the free memory pointer
+            mstore(0x40, add(freeMemPointer, 0x40))
+
+            // call the getBytes function of contract A and don't store the result
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x00)) {
+                revert(0,0)
+            }
+
+            // store the return data in memory starting from the free memory pointer
+            returndatacopy(mload(0x40), 0 , returndatasize())
+            // return the result from memory
+            return(mload(0x40), returndatasize())
+        }
+    }
+}
+```
+
+-   `delegatecall(g, a, in, insize, out, outsize)` - calls contract at address `a` with `g` gas and input area from `in` to `in + insize` and output area from `out` to `out + outsize` returning 0 on error (eg. out of gas) and 1 on success. The code is executed in the context of the current contract, i.e. `msg.sender` and `msg.value` do not change.
+
+OpenZeppelin Proxy implementation:
+
+```solidity
+function _delegate(address implementation) internal virtual {
+        assembly {
+            // Copy msg.data. We take full control of memory in this inline assembly
+            // block because it will not return to Solidity code. We overwrite the
+            // Solidity scratch pad at memory position 0.
+            calldatacopy(0, 0, calldatasize())
+
+            // Call the implementation.
+            // out and outsize are 0 because we don't know the size yet.
+            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+
+            // Copy the returned data.
+            returndatacopy(0, 0, returndatasize())
+
+            switch result
+            // delegatecall returns 0 on error.
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
+        }
+    }
+```
+
+-   `calldatasize()` - returns the size of the calldata for the last call.
+-   `calldatacopy(t, f, s)` - copies `s` bytes from the calldata from stack to memory, starting from position `f` and writes it to memory at position `t`.
+-   `calldataload(p)` - loads 32 bytes from the calldata starting from position `p`.
+
+-   Encoding dynamic size elements in calldata:
+
+```solidity
+contract A {
+    // Function that returns true if data1 is in data2, false otherwise
+    function f(uint256 data1, uint256[] calldata data2) external pure returns (bool) {
+        for(uint256 i; i < data2.length; i++) {
+            if(data1 == data2[i]){
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+contract B {
+    function callF(address _a) external view returns(bool) {
+        assembly {
+            // load the free memory pointer
+            let freeMemPointer := mload(0x40)
+            // store the first 4 bytes of kecack256("f(uint256, uint256[])") in memory
+            mstore(freeMemPointer, 0xbfda4ee2)
+            // store the uint256 1 to pass as data1
+            mstore(add(freeMemPointer, 0x20), 1)
+            // store the location of the array in calldata
+            mstore(add(freeMemPointer, 0x40), 0x40)
+            // store the length of the array
+            mstore(add(freeMemPointer, 0x60), 2)
+            // store the first element of the array
+            mstore(add(freeMemPointer, 0x80), 3)
+            // store the second element of the array
+            mstore(add(freeMemPointer, 0xa0), 1)
+            // update the free memory pointer
+            mstore(0x40, add(freeMemPointer, 0xc0))
+
+            // the memory from freeMemPointer to new free memory pointer is used as call data. It will look like this:
+            // 0x00 0000000000000000000000000000000000000000000000000000000000000001 - data1 uint256
+            // 0x20 0000000000000000000000000000000000000000000000000000000000000040 - location of the array in calldata
+            // 0x40 0000000000000000000000000000000000000000000000000000000000000002 - length of the array
+            // 0x60 0000000000000000000000000000000000000000000000000000000000000003 - first element of the array is 0
+            // 0x80 0000000000000000000000000000000000000000000000000000000000000001 - second element of the array is 1
+
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x20)) {
+                revert(0,0)
+            }
+            // the function will return true
+            return(0x00, 0x20)
+        }
+    }
+}
+```
+
+## Transfers
+
+-   To transfer Ether to another address, the `call` function is used:
+
+```solidity
+contract A {
+    address owner;
+
+    function transfer(address payable _to, uint256 _amount) external {
+        assembly {
+            if iszero(call(gas(), owner, selfbalance(), 0, 0, 0, 0)) {
+                revert(0,0)
+            }
+        }
+    }
+}
+```
+
+-   `selfbalance()` - returns the balance of the current contract.
+
+## Receiving calls from Solidity Contracts
+
+-   To receive calls from Solidity contracts, the `fallback` function is used, which is called when no other function matches the given function signature.
+
+```solidity
+    // the interface the Solidity contract will use to call the Yul contract
+    interface IYulContract {
+        function get23() external returns (uint256);
+        function increment(uint256 _value) external returns (uint256);
+    }
+
+    contract YulContract{
+        fallback(bytes calldata data) external returns (bytes memory returnData) {
+        assembly{
+            let callData := calldataload(0)
+            // 0x259c137d00000000000000000000000000000000000000000000000000000000 or
+            // 0x7cf5dab000000000000000000000000000000000000000000000000000000000
+            let selector := shr(0xe0, callData) // shift right 224 bits to get the last 4 bytes(32 bits)
+
+            // Switch in Yul is similar to if else, but it can only compare for equality.
+            // Once a case is matched, other cases are not checked.
+            switch
+            // In case the selector is 0x259c137d, call get23()
+            case 0x259c137d {
+                returnUint(23)
+            }
+            // In case the selector is 0x7cf5dab0, call increment()
+            case 0x7cf5dab0 {
+                returnUint(increment())
+            }
+            // In case the selector is none of the above, revert
+            default {
+                revert(0,0)
+            }
+
+            function returnUint(uint) {
+                mstore(0x00, uint)
+                // this will return to the Solidity contract, ending the Yul contract execution
+                return(0x00, 0x20)
+            }
+
+            function increment() -> result {
+                // if the param size is bigger than 36 bytes(4 function selector + 32 param), revert
+                if lt(calldatasize(), 36) {
+                    revert(0,0)
+                }
+
+                let param := calldataload(4)
+                result := add(param, 1)
+                // leave will return "result", while returning to the yul execution instead
+                // the Solidity contract as return does
+                leave
+            }
+        }
+    }
+    }
+```

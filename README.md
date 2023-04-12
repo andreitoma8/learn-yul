@@ -866,3 +866,36 @@ contract YulContract{
     }
 }
 ```
+
+# Contract fully wirtten in Yul
+
+## The following contract is fully written in Yul:
+
+-   Contract are `object` in Yul, and the `code` section is the actual Yul code.
+-   The `object` section is used to define functions and variables that can be used in the `code` section.
+-   Yul does not have to respect call data and function selectors.
+
+```yul
+object "FullyYul" {
+    // Basic constructor
+    code {
+        // store the caller address in storage slot 0
+        sstore(0, caller())
+        // return the bytecode of the contract
+        datacopy(0x00, dataoffset("runtime"), datasize("runtime"))
+        return(0x00, datasize("runtime"))
+    }
+
+    // The code of the contract
+    object "runtime" {
+        code {
+            // returns the "Message" data
+            mstore(0x00, dataoffset("Message"), datasize("Message"))
+            return (0x00, datasize("Message"))
+        }
+
+        // Stores data in the contract bytecode
+        data "Message" "Hello World"
+    }
+}
+```

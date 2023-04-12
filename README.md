@@ -6,6 +6,20 @@
 
 ### [Yul Syntax](#yul-syntax)
 
+### [Yul Types](#yul-types)
+
+### [Yul Basic Operations](#yul-basic-operations)
+
+### [Yul Functions](#yul-functions)
+
+### [Storage Solts & Variables](#storage-slots-and-variables)
+
+### [Memory](#memory)
+
+### [Calls](#calls)
+
+### [Contract fully wirtten in Yul](#contract-fully-written-in-yul)
+
 ## Description
 
 Yul is an intermediate language that can be compiled to bytecode for different backends. It can be used in stand-alone mode and for “inline assembly” inside Solidity. The compiler uses Yul as an intermediate language in the IR-based code generator (“new codegen” or “IR-based codegen”). Yul is a good target for high-level optimisation stages that can benefit all target platforms equally.

@@ -2,7 +2,9 @@
 
 ## This repository is a collection of my notes taken in the process of learning [Yul](https://docs.soliditylang.org/en/v0.8.17/yul.html), currently going through Jeffrey Scholz's [Yul course](https://www.udemy.com/course/advanced-solidity-yul-and-assembly/).
 
-Still a work in progress.
+## Contents:
+
+### [Yul Syntax](#yul-syntax)
 
 ## Description
 

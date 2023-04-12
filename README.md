@@ -4,21 +4,21 @@
 
 ## Contents:
 
-### [Yul Syntax](#yul-syntax)
+### [Yul Syntax](#yul-syntax-1)
 
-### [Yul Types](#yul-types)
+### [Yul Types](#yul-types-1)
 
-### [Yul Basic Operations](#yul-basic-operations)
+### [Yul Basic Operations](#yul-basic-operations-1)
 
-### [Yul Functions](#yul-functions)
+### [Yul Functions](#yul-functions-1)
 
-### [Storage Solts & Variables](#storage-slots-and-variables)
+### [Storage Slots & Variables](#storage-slots-and-variables-1)
 
-### [Memory](#memory)
+### [Memory](#memory-1)
 
-### [Calls](#calls)
+### [Calls](#calls-1)
 
-### [Contract fully wirtten in Yul](#contract-fully-written-in-yul)
+### [Contract fully wirtten in Yul](#contract-fully-written-in-yul-1)
 
 ## Description
 

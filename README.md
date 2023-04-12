@@ -1,6 +1,6 @@
 # Learn Yul
 
-## This repository is a collection of my notes taken in the process of learning Yul, currently going through Jeffrey Scholz's [Yul course](https://www.udemy.com/course/advanced-solidity-yul-and-assembly/).
+## This repository is a collection of my notes taken in the process of learning [Yul](https://docs.soliditylang.org/en/v0.8.17/yul.html), currently going through Jeffrey Scholz's [Yul course](https://www.udemy.com/course/advanced-solidity-yul-and-assembly/).
 
 Still a work in progress.
 
@@ -22,13 +22,21 @@ contract C {
 }
 ```
 
--   To declarea a variable, use the `let` keyword.
+In in-lane assambely, variables are initialized on the stack.
 
-```solidity
-let x := 1
+-   Function syntax:
+
+```yul
+function functionName(param1, param2, ...) -> return1, return2, ... {
+    // code
+}
 ```
 
-In in-lane assambely, you can only initialize variables on the stack. You cannot initialize variables in storage or memory.
+-   To declarea a variable, use the `let` keyword.
+
+```yul
+let x := 1
+```
 
 # Yul Types
 
@@ -56,11 +64,11 @@ function f() public pure returns (bool, uint256, bytes32) {
 
 ### Yul has no overflow protection!
 
--   add(x, y) - addition
--   sub(x, y) - subtraction
--   mul(x, y) - multiplication
--   div(x, y) - division
--   mod(x, y) - modulo
+-   `add(x, y)` - addition
+-   `sub(x, y)` - subtraction
+-   `mul(x, y)` - multiplication
+-   `div(x, y)` - division
+-   `mod(x, y)` - modulo
 
 For multiple operations, the innermost operation is executed first:
 
@@ -122,6 +130,44 @@ Yul has no boolean type. Instead, any value other than `0` is considered true.
         }
     }
 ```
+
+# Yul Functions
+
+## Comparison Operations
+
+-   `eq(x, y)` - equality
+-   `iszero(x)` - 1 if x == 0, 0 otherwise
+-   `lt(x, y)` - 1 if x < y, 0 otherwise
+-   `gt(x, y)` - 1 if x > y, 0 otherwise
+
+## Bitwise operations
+
+-   `and(x, y)` - bitwise “and” of x and y
+-   `or(x, y)` - bitwise “or” of x and y
+-   `xor(x, y)` - bitwise “xor” of x and y
+-   `not(x)` - bitwise “not” of x (every bit of x is negated)
+-   `byte(n, x)` - nth byte of x, where the most significant byte is the 0th byte
+-   `shl(x, y)` - logical shift left y by x bits
+-   `shr(x, y)` - logical shift right y by x bits
+
+## Other useful functions
+
+-   `pop(x)` - discard the value x (useful for discarding return values of functions), eliminating it from the stack
+-   `gas()` - return the remaining gas
+-   `address()` - return the current contract address
+-   `caller()` - return the address of the caller
+-   `origin()` - return the address of the original transaction sender
+-   `callvalue()` - return the value sent with the current call
+-   `selfbalance()` - return the balance of the current contract
+-   `balance(a)` - return the balance of the address a
+-   `create(v, p, n)` - create a new contract with code memory[p…(p+n)) and send v wei and return the new address, or 0 on failure
+-   `create2(v, p, n, s)` - create a new contract with code memory[p…(p+n)) at address keccak256(0xff . this . s . keccak256(memory[p…(p+n)))) and send v wei and return the new address, or 0 on failure
+-   `selfdestruct(a)` - destroy the current contract and send its funds to address a
+-   `gasprice()` - return the gas price of the current transaction
+-   `timestamp()` - return the timestamp of the current block
+-   `number()` - return the block number of the current block
+
+More functions related to storage and memory will be covered in the next sections.
 
 # Storage Slots & Variables
 
@@ -558,7 +604,7 @@ The `t1` is the keccak256 hash of the event signature, and the `t2` is the first
 
     assembly {
         ssembly {
-            // read a bite from memory slot 0xff
+            // read a bite from memory slot 0xff, and discard the value read
             pop(mload(0xff))
             // the free memory pointer is still 0x80
             slot := mload(0x40)
@@ -874,6 +920,8 @@ contract YulContract{
 -   Contract are `object` in Yul, and the `code` section is the actual Yul code.
 -   The `object` section is used to define functions and variables that can be used in the `code` section.
 -   Yul does not have to respect call data and function selectors.
+
+The following example of a contract written in Yul, will return the string "Hello World" when called.
 
 ```yul
 object "FullyYul" {

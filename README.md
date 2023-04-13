@@ -824,9 +824,9 @@ function _delegate(address implementation) internal virtual {
     }
 ```
 
--   `calldatasize()` - returns the size of the calldata for the last call.
+-   `calldatasize()` - returns the size of the calldata for the last call in `bytes`.
 -   `calldatacopy(t, f, s)` - copies `s` bytes from the calldata from stack to memory, starting from position `f` and writes it to memory at position `t`.
--   `calldataload(p)` - loads 32 bytes from the calldata starting from position `p`.
+-   `calldataload(p)` - loads 32 bytes from the calldata starting from byte position `p`.
 
 -   Encoding dynamic size elements in calldata:
 

@@ -58,6 +58,12 @@ let x := 1
 
 ### Yul has only 1 type: `bytes32`. This can hold any value. The compiler will automatically insert conversions as needed.
 
+For literals, the following types are available:
+
+-   Integer constants in decimal or hexadecimal notation.
+-   ASCII strings (e.g. `"abc"`), which may contain hex escapes `\xNN` and Unicode escapes `\uNNNN` where `N` are hexadecimal digits.
+-   Hex strings (e.g. `hex"616263"`).
+
 For example, the following function will return `true`, `10`, and `0x48656c6c6f20576f726c64210000000000000000000000000000000000000000` which is the bytes32 representation of the "Hello World!" string.
 
 ```solidity
@@ -116,6 +122,8 @@ Both of the following examples are valid:
     }
 ```
 
+To exit the for loop use the `break` statement.
+
 ## If Statement
 
 Yul has no boolean type. Instead, any value other than `0` is considered true.
@@ -142,6 +150,27 @@ Yul has no boolean type. Instead, any value other than `0` is considered true.
             // if 0 is 0 result in true, negation of false
             if iszero(0) {
                 // if true, do something
+            }
+        }
+    }
+```
+
+## Switch Statement
+
+Switch statements are similar to if statements, but they can have only one case that is true, as the other cases are not checked after one is true.
+
+```solidity
+    function switchStatement(uint256 n) public {
+        assembly {
+            switch n
+            case 0 {
+                // if n == 0 do something
+            }
+            case 1 {
+                // if n == 1 do something
+            }
+            default {
+                // if neither case is true, do something
             }
         }
     }

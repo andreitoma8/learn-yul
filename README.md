@@ -958,7 +958,7 @@ contract YulContract{
 }
 ```
 
-# Contract fully wirtten in Yul
+# Contract fully written in Yul
 
 ## The following contract is fully written in Yul:
 

@@ -4,23 +4,16 @@
 
 ## Contents:
 
-### [Yul Syntax](#yul-syntax-1)
+-   [Yul Syntax](#yul-syntax)
+-   [Yul Types](#yul-types)
+-   [Yul Basic Operations](#yul-basic-operations)
+-   [Yul Functions](#yul-functions)
+-   [Storage Slots & Variables](#storage-slots--variables)
+-   [Memory](#memory)
+-   [Calls](#calls)
+-   [Contract fully written in Yul](#contract-fully-written-in-yul)
 
-### [Yul Types](#yul-types-1)
-
-### [Yul Basic Operations](#yul-basic-operations-1)
-
-### [Yul Functions](#yul-functions-1)
-
-### [Storage Slots & Variables](#storage-slots-and-variables-1)
-
-### [Memory](#memory-1)
-
-### [Calls](#calls-1)
-
-### [Contract fully wirtten in Yul](#contract-fully-written-in-yul-1)
-
-### [Yul and Solidity Contracts Comparison](https://github.com/andreitoma8/learn-yul/blob/master/CrowdFunding-Contract-Example.md)
+### Bonus: [Solidity vs Yul CrowdFunding Contract](https://github.com/andreitoma8/learn-yul/blob/master/CrowdFunding-Contract-Example.md)
 
 ## Description
 

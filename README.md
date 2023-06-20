@@ -466,7 +466,29 @@ Using `mstore8` 7 into memory slot 0:
     }
 ```
 
-#### While the free memory pointer is automatically updated by Solidity, it is not updated by assembly code, so you have to do it yourself if solidity code follows the in-line assembly code.
+### While the free memory pointer is automatically updated by Solidity, it is not updated by assembly code, so you have to do it yourself if solidity code follows the in-line assembly code.
+
+Each time when switching from Yul back to Solidity, the free memory pointer should be manually updated so that Solidity can use it:
+
+```solidity
+    assembly {
+        // do some memory stuff with 3 slots of memory
+        let freeMemoryPointer := mload(0x40)
+        msotre(freeMemoryPointer, 1)
+        msotre(add(freeMemoryPointer, 0x20), 2)
+        msotre(add(freeMemoryPointer, 0x40), 3)
+
+        // update the free memory pointer
+        allocate(0x60)
+
+        // function that gets the length of the memory added as input
+        // and updates the free memory pointer
+        function allocate(length) {
+            let pos := mload(0x40)
+            mstore(0x40, add(pos, length))
+        }
+    }
+```
 
 ### Memory Struct
 

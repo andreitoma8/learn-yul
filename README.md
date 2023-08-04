@@ -474,9 +474,9 @@ Each time when switching from Yul back to Solidity, the free memory pointer shou
     assembly {
         // do some memory stuff with 3 slots of memory
         let freeMemoryPointer := mload(0x40)
-        msotre(freeMemoryPointer, 1)
-        msotre(add(freeMemoryPointer, 0x20), 2)
-        msotre(add(freeMemoryPointer, 0x40), 3)
+        mstore(freeMemoryPointer, 1)
+        mstore(add(freeMemoryPointer, 0x20), 2)
+        mstore(add(freeMemoryPointer, 0x40), 3)
 
         // update the free memory pointer
         allocate(0x60)

@@ -490,35 +490,6 @@ Each time when switching from Yul back to Solidity, the free memory pointer shou
     }
 ```
 
-### Dynamic Arrays in memory
-
-When declaring a dynamic array in Solidity(like bytes and string), but it is not initialized at the same time, the `zero slot` is used as the initial value(that's where the array pointer points to). It is important that when you use a dynamic array is a assembly block, and that dynamic array is only declared in Solidity and not initialized, you have to initialize it yourself in assembly. Otherwise most likely there will be memory collision because your array will start at the `zero slot`.
-
-Here's an example of how the `b` array is initialized to the `zero slot` and how you would have to initialize it yourself in assembly:
-
-```solidity
-    function f() external returns(bytes memory) {
-        bytes memory b;
-
-        // Make the array b = 0xffffff
-        assembly {
-            // b points to 0x60 at the start of the block
-
-            // make b point to the free memory pointer
-            b := mload(0x40)
-            // add the length of the array as the first 32 bytes
-            mstore(b, 3)
-            // add the value of the array as the next 3 bytes
-            mstore(add(b, 0x20), 0xffffff0000000000000000000000000000000000000000000000000000000000)
-
-            // update the free memory pointer so solidity can use it
-            mstore(0x40, add(b, 0x40))
-        }
-
-        return b;
-    }
-```
-
 ### Memory Struct
 
 Adding structs to memory is just like adding their values 1 by 1.
@@ -577,6 +548,35 @@ For dynamic arrays, the first memory slot of 32 bytes is used to store the lengh
             mload(add(location, 0x20)) // returns the first element of the array
             mload(add(location, 0x40)) // returns the second element of the array
         }
+    }
+```
+
+#### Memory Dynamic Arrays declared in Solidity
+
+When declaring a dynamic array in Solidity(like bytes and string), but it is not initialized at the same time, the `zero slot` is used as the initial value(that's where the array pointer points to). It is important that when you use a dynamic array is a assembly block, and that dynamic array is only declared in Solidity and not initialized, you have to initialize it yourself in assembly. Otherwise most likely there will be memory collision because your array will start at the `zero slot`.
+
+Here's an example of how the `b` array is initialized to the `zero slot` and how you would have to initialize it yourself in assembly:
+
+```solidity
+    function f() external returns(bytes memory) {
+        bytes memory b;
+
+        // Make the array b = 0xffffff
+        assembly {
+            // b points to 0x60 at the start of the block
+
+            // make b point to the free memory pointer
+            b := mload(0x40)
+            // add the length of the array as the first 32 bytes
+            mstore(b, 3)
+            // add the value of the array as the next 3 bytes
+            mstore(add(b, 0x20), 0xffffff0000000000000000000000000000000000000000000000000000000000)
+
+            // update the free memory pointer so solidity can use it
+            mstore(0x40, add(b, 0x40))
+        }
+
+        return b;
     }
 ```
 

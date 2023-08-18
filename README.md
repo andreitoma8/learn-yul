@@ -622,9 +622,8 @@ The `return(a,b)` will take the data from memory, of size 'b' starting from slot
             // store 1 and 2 in memory slots 0x80 and 0xa0
             mstore(0x80, 1)
             mstore(0xa0, 2)
-            // return the data from slot 0x80 and 0x40 is size of the return data
+            // return the data from slot 0x80 while 0x40 being the size of the return data
             return(0x80, 0x40)
-            // return(0x80, 0xc0) // returns data of size 0xc0 (which is bigger than expected)
         }
     }
 ```

@@ -614,7 +614,7 @@ Compared to abi.encode, abi.encodePacked will not add padding to the arguments.
 
 ## return
 
-The `return(a,b)` will take the data from memory, from slot a to slot b. This allows you to return data that is bigger than 32 bytes.
+The `return(a,b)` will take the data from memory, of size 'b' starting from slot a. This allows you to return data that is bigger than 32 bytes.
 
 ```solidity
     function f() external returns (uint256, uint256) {
@@ -622,8 +622,9 @@ The `return(a,b)` will take the data from memory, from slot a to slot b. This al
             // store 1 and 2 in memory slots 0x80 and 0xa0
             mstore(0x80, 1)
             mstore(0xa0, 2)
-            // return the data from slot 0x80 to slot 0xc0
-            return(0x80, 0xc0)
+            // return the data from slot 0x80 and 0x40 is size of the return data
+            return(0x80, 0x40)
+            // return(0x80, 0xc0) // returns data of size 0xc0 (which is bigger than expected)
         }
     }
 ```

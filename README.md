@@ -633,7 +633,7 @@ If the return data is smaller than 32 bytes, it will not be padded to 32 bytes, 
 
 ## revert
 
-The args of `revert(a,b)` are the same as `return(a,b)`, in the sense that it will also return the data from memory, from slot a to slot b. The difference is that `revert` will stop the execution of the function(it will not revert the whole transaction and the blockchain state as Solidity does).
+The args of `revert(a,b)` are the same as `return(a,b)`, in the sense that it will also return the data from memory, of size 'b' starting from slot a. The difference is that `revert` will stop the execution of the function(it will not revert the whole transaction and the blockchain state as Solidity does).
 
 ```solidity
     assembly {

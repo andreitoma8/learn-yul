@@ -750,7 +750,7 @@ contract B {
 
             // call the function 23 of contract A
             // and store the result in memory slot 0x00
-            if iszero(staticcall(gas(), _a, 28, 32, 0x00, 0x20)) {
+            if iszero(staticcall(gas(), _a, 28, 4, 0x00, 0x20)) {
                 revert(0, 0)
             }
             // return the result from memory slot 0x00
@@ -789,7 +789,7 @@ contract B {
 
             // call the sum function of contract A
             // and store the result in memory slot 0x00
-            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x20)) {
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), 0x44, 0x00, 0x20)) {
                 revert(0,0)
             }
             // return the result from memory slot 0x00
@@ -826,7 +826,7 @@ contract B {
             mstore(0x40, add(freeMemPointer, 0x40))
 
             // call the getBytes function of contract A and don't store the result
-            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x00)) {
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), 0x24, 0x00, 0x00)) {
                 revert(0,0)
             }
 
@@ -916,7 +916,7 @@ contract B {
             // 0x60 0000000000000000000000000000000000000000000000000000000000000003 - first element of the array is 0
             // 0x80 0000000000000000000000000000000000000000000000000000000000000001 - second element of the array is 1
 
-            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x20)) {
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), 0xa4, 0x00, 0x20)) {
                 revert(0,0)
             }
             // the function will return true

@@ -614,7 +614,7 @@ Compared to abi.encode, abi.encodePacked will not add padding to the arguments.
 
 ## return
 
-The `return(a,b)` will take the data from memory, from slot a to slot b. This allows you to return data that is bigger than 32 bytes.
+The `return(a,b)` will take the data from memory, of size 'b' starting from slot a. This allows you to return data that is bigger than 32 bytes.
 
 ```solidity
     function f() external returns (uint256, uint256) {
@@ -622,8 +622,8 @@ The `return(a,b)` will take the data from memory, from slot a to slot b. This al
             // store 1 and 2 in memory slots 0x80 and 0xa0
             mstore(0x80, 1)
             mstore(0xa0, 2)
-            // return the data from slot 0x80 to slot 0xc0
-            return(0x80, 0xc0)
+            // return the data from slot 0x80 while 0x40 being the size of the return data
+            return(0x80, 0x40)
         }
     }
 ```
@@ -632,7 +632,7 @@ If the return data is smaller than 32 bytes, it will not be padded to 32 bytes, 
 
 ## revert
 
-The args of `revert(a,b)` are the same as `return(a,b)`, in the sense that it will also return the data from memory, from slot a to slot b. The difference is that `revert` will stop the execution of the function(it will not revert the whole transaction and the blockchain state as Solidity does).
+The args of `revert(a,b)` are the same as `return(a,b)`, in the sense that it will also return the data from memory, of size 'b' starting from slot a. The difference is that `revert` will stop the execution of the function(it will not revert the whole transaction and the blockchain state as Solidity does).
 
 ```solidity
     assembly {

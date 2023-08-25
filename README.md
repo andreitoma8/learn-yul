@@ -736,21 +736,19 @@ Function with no params example:
 ```solidity
 contract A {
     // the function selector of 23() is 0x5c60da1b (keccak256("23()")[0:4])
-    function 23() external returns (uint256) {
-        return 23;
+    function get21() external returns (uint256) {
+        return 21;
     }
 }
-
 contract B {
-    function call23(address _a) external view returns (uint256) {
+    function callGet21(address _a) external view returns (uint256) {
         assembly {
-            mstore(0x00, 0x00afa6ed)
-            // // 0000000000000000000000000000000000000000000000000000000000afa6ed
-            // last 4 bytes of the memory slot 0x00 are the function selector of 23()
-
+            mstore(0x00, 0x9a884bde)
+            // // 0000000000000000000000000000000000000000000000000000000009a884bde
+            // last 4 bytes of the memory slot 0x00 are the function selector of getUint()
             // call the function 23 of contract A
             // and store the result in memory slot 0x00
-            if iszero(staticcall(gas(), _a, 28, 32, 0x00, 0x20)) {
+            if iszero(staticcall(gas(), _a, 28, 4, 0x00, 0x20)) {
                 revert(0, 0)
             }
             // return the result from memory slot 0x00
@@ -789,7 +787,7 @@ contract B {
 
             // call the sum function of contract A
             // and store the result in memory slot 0x00
-            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x20)) {
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), 68, 0x00, 0x20)) {
                 revert(0,0)
             }
             // return the result from memory slot 0x00
@@ -814,19 +812,19 @@ contract A {
 }
 
 contract B {
-    function callSum(address _a) external view returns (bytes memory) {
+    function callGetBytes(address _a) external view returns (bytes memory) {
         assembly {
             // load the free memory pointer
             let freeMemPointer := mload(0x40)
             // store the function selector of getBytes(uint256) in memory
             mstore(freeMemPointer, 0x57bc2ef3)
             // store the argument 10 for getBytes(uint256) in the next memory slot
-            mstore(add(freeMemPointer, 0x20), 100)
+            mstore(add(freeMemPointer, 0x20), 10)
             // update the free memory pointer
             mstore(0x40, add(freeMemPointer, 0x40))
 
             // call the getBytes function of contract A and don't store the result
-            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x00)) {
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), 36, 0x00, 0x00)) {
                 revert(0,0)
             }
 
@@ -877,6 +875,9 @@ function _delegate(address implementation) internal virtual {
 -   Encoding dynamic size elements in calldata:
 
 ```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
 contract A {
     // Function that returns true if data1 is in data2, false otherwise
     function f(uint256 data1, uint256[] calldata data2) external pure returns (bool) {
@@ -916,7 +917,7 @@ contract B {
             // 0x60 0000000000000000000000000000000000000000000000000000000000000003 - first element of the array is 0
             // 0x80 0000000000000000000000000000000000000000000000000000000000000001 - second element of the array is 1
 
-            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), mload(0x40), 0x00, 0x20)) {
+            if iszero(staticcall(gas(), _a, add(freeMemPointer, 28), 164, 0x00, 0x20)) {
                 revert(0,0)
             }
             // the function will return true

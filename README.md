@@ -1095,25 +1095,17 @@ function safeSub(a, b) -> result {
 }
 ```
 
--   Multiplication: if the product divided by the first value is not equal to the second value, then there is an overflow.
+-   Multiplication: if the product divided by the first value is not equal to the second value, then there is an overflow. There is an edge case when a is 0, so we have to check for that.
 
 ```yul
 function safeMul(a, b) -> result {
-    result := mul(a, b)
-
-    if iszero(eq(div(result, a), b)) {
-        revert(0,0)
+    switch a
+    case 0 {result := 0}
+    default {
+        result := mul(a, b)
+        if iszero(eq(div(result, a), b)) {
+            revert(0,0)
+        }
     }
-}
-```
-
--   Division: check if the divisor is bigger than the dividend.
-
-```yul
-function safeDiv(a, b) -> result {
-    if lt(b, a) {
-        revert(0,0)
-    }
-    result := div(a, b)
 }
 ```

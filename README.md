@@ -33,7 +33,7 @@ contract C {
 }
 ```
 
-In in-lane assambely, variables are initialized on the stack.
+In in-line assembly, variables are initialized on the stack.
 
 -   Function syntax:
 
@@ -43,7 +43,7 @@ function functionName(param1, param2, ...) -> return1, return2, ... {
 }
 ```
 
--   To declarea a variable, use the `let` keyword.
+-   To declare a variable, use the `let` keyword.
 
 ```yul
 let x := 1
@@ -336,7 +336,7 @@ Example of setter and getter function for packed storage variables:
 
 ### Simple Mapping
 
-Mappings behave similar to arrays, but it concatenates the key and the mapping's storage slot to get the location of the value.
+Mappings behave similar to arrays, but they concatenate the key and the mapping's storage slot to get the location of the value.
 
 ```solidity
     mapping(uint256 => uint256) map;
@@ -517,7 +517,7 @@ Adding structs to memory is just like adding their values 1 by 1.
 
 ### Memory Fixed Arrays
 
-Fixed arays work just like structs
+Fixed arrays work just like structs
 
 ```solidity
     function f() external {
@@ -532,7 +532,7 @@ Fixed arays work just like structs
 
 ### Memory Dynamic Arrays
 
-For dynamic arrays, the first memory slot of 32 bytes is used to store the lenght of the array. In Yul, the array value is the location of the array in memory.
+For dynamic arrays, the first memory slot of 32 bytes is used to store the length of the array. In Yul, the array value is the location of the array in memory.
 
 ```solidity
     function f(uint256[] memory arr) external {
@@ -553,7 +553,7 @@ For dynamic arrays, the first memory slot of 32 bytes is used to store the lengh
 
 #### Memory Dynamic Arrays declared in Solidity
 
-When declaring a dynamic array in Solidity(like bytes and string), but it is not initialized at the same time, the `zero slot` is used as the initial value(that's where the array pointer points to). It is important that when you use a dynamic array is a assembly block, and that dynamic array is only declared in Solidity and not initialized, you have to initialize it yourself in assembly. Otherwise most likely there will be memory collision because your array will start at the `zero slot`.
+When declaring a dynamic array in Solidity(like bytes and string), but it is not initialized at the same time, the `zero slot` is used as the initial value(that's where the array pointer points to). It is important that when you use a dynamic array as an assembly block, and that dynamic array is only declared in Solidity and not initialized, you have to initialize it yourself in assembly. Otherwise most likely there will be memory collision because your array will start at the `zero slot`.
 
 Here's an example of how the `b` array is initialized to the `zero slot` and how you would have to initialize it yourself in assembly:
 

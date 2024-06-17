@@ -1030,7 +1030,7 @@ object "FullyYul" {
     object "runtime" {
         code {
             // returns the "Message" data
-            mstore(0x00, dataoffset("Message"), datasize("Message"))
+            datacopy(0x00, dataoffset("Message"), datasize("Message"))
             return (0x00, datasize("Message"))
         }
 

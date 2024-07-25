@@ -1,6 +1,8 @@
 # Learn Yul
 
-## This repository is a collection of my notes taken in the process of learning [Yul](https://docs.soliditylang.org/en/v0.8.17/yul.html), currently going through Jeffrey Scholz's [Yul course](https://www.udemy.com/course/advanced-solidity-yul-and-assembly/).
+## This repository is a collection of my notes taken in the process of learning [Yul](https://docs.soliditylang.org/en/v0.8.17/yul.html).
+
+Props to Jeffrey Scholz for his [Yul course](https://www.udemy.com/course/advanced-solidity-yul-and-assembly/).
 
 ## Contents:
 

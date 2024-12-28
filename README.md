@@ -541,7 +541,7 @@ For dynamic arrays, the first memory slot of 32 bytes is used to store the lengt
         bytes32 location;
         bytes32 length;
 
-        assembley {
+        assembly {
             // the location will be the first free memory pointer: 0x80
             location := arr
             // the length will be the first memory slot of the array: 0x80

@@ -694,18 +694,17 @@ The `t1` is the keccak256 hash of the event signature, and the `t2` is the first
 ```solidity
     bytes32 slot;
     bytes32 _msize;
-
+    
     assembly {
-        ssembly {
-            // read a bite from memory slot 0xff, and discard the value read
-            pop(mload(0xff))
-            // the free memory pointer is still 0x80
-            slot := mload(0x40)
-            // but msize considers the memory slot 0xff as used
-            // so _msize is 0x120
-            _msize := msize()
-        }
+        // read a byte from memory slot 0xff, and discard the value read
+        pop(mload(0xff))
+        // the free memory pointer is still 0x80
+        slot := mload(0x40)
+        // but msize considers the memory slot 0xff as used
+        // so _msize is 0x120
+        _msize := msize()
     }
+
 ```
 
 # Calls
